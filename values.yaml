@@ -1,7 +1,0 @@
-image:
-  repository: sysintelligent/hello-app
-  tag: 1.0.0
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
