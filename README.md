@@ -1,1 +1,3 @@
-# hello-app-helm
+# Hello App Chart
+
+1.0.0
