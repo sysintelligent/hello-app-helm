@@ -8,11 +8,12 @@ Run command below to install the chart:
 
 ```sh
 $ helm repo add sysintelligent https://sysintelligent.github.io/hello-app-helm/
-$ helm install hello-app sysintelligent/hello-app --version 1.0.0
+$ helm install my-hello-app sysintelligent/hello-app --version 1.0.0
 ```
 
 Test it
 
 ```sh
-$ curl http://localhost:30000
+$ curl http://<cluster-node-ip>:30000
 hello-app says hi! [version: 1.0.0]
+```
