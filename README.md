@@ -16,3 +16,4 @@ Test it
 ```sh
 $ curl http://<cluster-node-ip>:30000
 hello-app says hi! [version: 1.0.0]
+```
