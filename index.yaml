@@ -3,12 +3,12 @@ entries:
   hello-app:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2023-06-08T16:16:04.649928224-07:00"
+    created: "2023-06-08T16:40:28.511892992-07:00"
     description: A Helm chart for hello-app
-    digest: 6cc07b409ebbf1c7a1d3ecc6da75ccacce048279ade9a1f3465e3512f041dfa1
+    digest: 6d00c1fb8af0844addaf7be2f09628c35ffe87dc1969bc56d9f0ecb833edd08c
     name: hello-app
     type: application
     urls:
     - hello-app-1.0.0.tgz
     version: 1.0.0
-generated: "2023-06-08T16:16:04.649259661-07:00"
+generated: "2023-06-08T16:40:28.511595959-07:00"
