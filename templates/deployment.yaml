@@ -9,6 +9,7 @@ spec:
       app: hello-app
   template:
     metadata:
+      name: hello-app # Specify the desired pod name
       labels:
         app: hello-app
     spec:
