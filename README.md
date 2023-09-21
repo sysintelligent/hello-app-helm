@@ -17,3 +17,9 @@ Test it
 $ curl http://<cluster-node-ip>:30000
 hello-app says hi! [version: 1.0.0]
 ```
+
+If you are on Minikube, try
+
+```
+curl $(minikube ip):30000
+```
