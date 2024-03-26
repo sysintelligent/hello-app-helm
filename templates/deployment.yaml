@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: hello-app
+  namespace: hello-app   # Set the namespace to hello-app
 spec:
   replicas: 1
   selector:
@@ -13,6 +14,7 @@ spec:
       labels:
         app: hello-app
     spec:
+      serviceAccountName: hello-app-service-account
       containers:
         - name: hello-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
