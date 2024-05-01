@@ -17,7 +17,7 @@ To install the hello-app chart, follow these steps:
 
 2. Install the hello-app chart:
    ```sh
-   $ helm install my-hello-app sysintelligent/hello-app --version 1.0.0
+   $ helm install my-hello-app sysintelligent/hello-app --version <application version#>
    ```
 
 Once installed, you can test the application by sending an HTTP request to its endpoint:
@@ -48,7 +48,7 @@ To test hello-app locally, follow these steps:
 
    Or
    
-   $ helm install hello-app ./hello-app-2.0.1.tgz
+   $ helm install hello-app ./hello-app-<application version#>.tgz
    ```
 
 3. Send an HTTP request to the application's endpoint:
