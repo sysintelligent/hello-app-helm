@@ -45,6 +45,10 @@ To test hello-app locally, follow these steps:
 2. Install the hello-app chart:
    ```sh
    $ helm install hello-app .
+
+   Or
+   
+   $ helm install hello-app ./hello-app-2.0.1.tgz
    ```
 
 3. Send an HTTP request to the application's endpoint:
