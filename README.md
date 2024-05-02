@@ -25,7 +25,7 @@ Once installed, you can test the application by sending an HTTP request to its e
 ```sh
 $ curl http://<cluster-node-ip>:30000
 ```
-This should return a response similar to: `hello-app says hi! [version: 1.0.0]`
+This should return a response similar to: `hello-app says hi! [<application version$>]`
 
 If you are using Minikube, you can test it with the following command:
 
