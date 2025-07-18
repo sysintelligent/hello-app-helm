@@ -50,6 +50,11 @@ kubectl cluster-info
    helm install hello-app sysintelligent/hello-app --version 2.0.1
    ```
 
+4. **Uninstall the chart (when done):**
+   ```bash
+   helm uninstall hello-app
+   ```
+
 ### Configuration Parameters
 
 | Parameter | Description | Default |
@@ -288,17 +293,7 @@ kubectl describe service hello-app-nodeport -n hello-app
 kubectl describe service hello-app-lb -n hello-app
 ```
 
-### Cleanup
 
-**Uninstall the chart:**
-```bash
-helm uninstall hello-app
-```
-
-**Manual cleanup (if needed):**
-```bash
-kubectl delete namespace hello-app
-```
 
 ### Getting Help
 
