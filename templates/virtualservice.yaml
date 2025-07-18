@@ -1,0 +1,43 @@
+{{- if .Values.virtualService.enabled }}
+# Istio VirtualService for routing traffic from Gateway to hello-app service
+# This is required for Istio/Kyma clusters to properly route external traffic
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ include "helm.fullname" . }}-virtualservice
+  namespace: hello-app
+  labels:
+    app: hello-app
+    type: virtualservice
+spec:
+  # List of hosts that this VirtualService applies to
+  # Format: {subdomain}.{cluster-domain}
+  hosts:
+    {{- range .Values.virtualService.hosts }}
+    - {{ .host }}.{{ $.Values.virtualService.domain }}
+    {{- end }}
+  
+  # Reference to the Istio Gateway that handles external traffic
+  # kyma-gateway is the default gateway in Kyma clusters
+  gateways:
+    - kyma-system/kyma-gateway
+  
+  # HTTP routing rules
+  http:
+    {{- range .Values.virtualService.hosts }}
+    {{- range .paths }}
+    - match:
+        # Match requests based on URI prefix
+        - uri:
+            prefix: {{ .path }}
+      route:
+        # Route matched requests to the hello-app service
+        - destination:
+            # Full service DNS name in cluster
+            host: {{ $.Values.mainService.nodeport }}.hello-app.svc.cluster.local
+            port:
+              # Service port to forward traffic to
+              number: {{ $.Values.service.port }}
+    {{- end }}
+    {{- end }}
+{{- end }} 

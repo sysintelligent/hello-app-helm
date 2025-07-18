@@ -24,3 +24,12 @@ loadBalancer:
 mainService:
   nodeport: hello-app-nodeport
   loadbalancer: hello-app
+
+# Istio VirtualService configuration
+virtualService:
+  enabled: false  # Set to true to create VirtualService for Istio routing
+  domain: c-3bc6feb.stage.kyma.ondemand.com  # Your cluster domain (discoverable via kubectl get configmap shoot-info -n kube-system -o jsonpath='{.data.domain}')
+  hosts:
+    - host: hello-app  # Subdomain prefix (will become hello-app.{domain})
+      paths:
+        - path: /

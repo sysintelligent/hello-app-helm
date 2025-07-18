@@ -8,11 +8,12 @@ Hello App is a simple HTTP service designed for rapid deployment and validation 
 
 **Key Features:**
 - Lightweight container (sysintelligent/hello-app:2.0.1)
-- Multiple access methods (NodePort, LoadBalancer, Port Forwarding)
+- Multiple access methods (NodePort, LoadBalancer, Port Forwarding, Istio VirtualService)
 - Dedicated namespace isolation (hello-app)
 - RBAC security configuration
 - Resource-constrained deployment (50m CPU, 20Mi memory)
 - Easy configuration through Helm values
+- **Verified Istio/Kyma Integration**: Successfully tested with Kyma cluster domain routing
 
 **Chart Version:** 2.0.1  
 **App Version:** 2.0.1
@@ -64,6 +65,8 @@ kubectl cluster-info
 | `service.type` | Primary service type | `NodePort` |
 | `service.nodePort` | NodePort port number | `30000` |
 | `loadBalancer.enabled` | Enable additional LoadBalancer service | `true` |
+| `virtualService.enabled` | Enable Istio VirtualService for domain routing | `false` |
+| `virtualService.domain` | Cluster domain for VirtualService | `c-3bc6feb.stage.kyma.ondemand.com` |
 | `resources.limits.cpu` | CPU limit | `50m` |
 | `resources.limits.memory` | Memory limit | `20Mi` |
 
@@ -116,7 +119,55 @@ kubectl port-forward service/hello-app-nodeport -n hello-app 8080:80
 curl http://localhost:8080
 ```
 
-### 4. Service Configuration Examples
+**Note:** Port forwarding may not work in all cluster environments due to network policies or firewall restrictions. If port forwarding fails, use LoadBalancer or VirtualService access methods instead.
+
+### 4. Istio VirtualService Access (Production with Domain)
+
+When `virtualService.enabled=true`, an Istio VirtualService is created for domain-based access:
+
+#### **Getting Your Cluster Domain:**
+
+```bash
+# Method 1: From cluster configmap (recommended)
+kubectl get configmap shoot-info -n kube-system -o jsonpath='{.data.domain}'
+
+# Method 2: From Istio Gateway
+kubectl get gateway kyma-gateway -n kyma-system -o jsonpath='{.spec.servers[0].hosts[0]}'
+
+# Method 3: From existing VirtualServices
+kubectl get virtualservice -A --no-headers | grep -o '[^"]*\.[^"]*\.stage\.kyma\.ondemand\.com'
+```
+
+#### **Installation with Domain:**
+
+```bash
+# Get your cluster domain
+export CLUSTER_DOMAIN=$(kubectl get configmap shoot-info -n kube-system -o jsonpath='{.data.domain}')
+
+# Install with VirtualService enabled (auto-discover domain)
+helm install hello-app . --set virtualService.enabled=true --set virtualService.domain=$CLUSTER_DOMAIN
+
+# Or manually specify the domain
+helm install hello-app . --set virtualService.enabled=true --set virtualService.domain=c-3bc6feb.stage.kyma.ondemand.com
+```
+
+#### **Check and Access:**
+
+```bash
+# Check VirtualService status
+kubectl get virtualservice -n hello-app
+
+# Access via domain (Kyma cluster domain)
+# HTTP (redirects to HTTPS)
+curl http://hello-app.c-3bc6feb.stage.kyma.ondemand.com
+
+# HTTPS (recommended)
+curl -k https://hello-app.c-3bc6feb.stage.kyma.ondemand.com
+```
+
+**Note:** For Istio/Kyma clusters, the VirtualService routes traffic from the Istio Gateway to your application service. The domain pattern is `{app-name}.{cluster-domain}`.
+
+### 5. Service Configuration Examples
 
 **Multiple service types can be configured:**
 
@@ -140,8 +191,17 @@ service:
   type: LoadBalancer
 loadBalancer:
   enabled: false
-```
 
+# With VirtualService (Production)
+service:
+  type: NodePort
+loadBalancer:
+  enabled: true
+virtualService:
+  enabled: true
+  domain: c-3bc6feb.stage.kyma.ondemand.com  # Replace with your cluster domain
+
+```
 ## Testing
 
 ### Basic Connectivity Test
@@ -165,8 +225,15 @@ loadBalancer:
 
 4. **Test via port forwarding:**
    ```bash
-   kubectl port-forward service/hello-app-nodeport -n hello-app 8080:80 &
+   kubectl port-forward service/hello-app-nodeport -n hello-app 8080:80
+   # In another terminal:
    curl http://localhost:8080
+   ```
+
+5. **Test via VirtualService (if enabled):**
+   ```bash
+   kubectl get virtualservice -n hello-app
+   curl -k https://hello-app.c-3bc6feb.stage.kyma.ondemand.com
    ```
 
 ### Expected Response
@@ -198,6 +265,38 @@ For performance testing:
 # Simple load test
 for i in {1..10}; do curl http://<service-endpoint> & done
 ```
+
+### Comprehensive Testing Example
+
+Here's a complete testing sequence that was successfully verified:
+
+```bash
+# 1. Install with VirtualService enabled
+helm install hello-app . --set virtualService.enabled=true --set virtualService.domain=c-3bc6feb.stage.kyma.ondemand.com
+
+# 2. Verify all resources
+kubectl get all -n hello-app
+kubectl get virtualservice -n hello-app
+
+# 3. Test all access methods
+# VirtualService (Primary)
+curl -k https://hello-app.c-3bc6feb.stage.kyma.ondemand.com
+
+# HTTP redirect
+curl -I http://hello-app.c-3bc6feb.stage.kyma.ondemand.com
+
+# LoadBalancer
+kubectl get service hello-app-lb -n hello-app
+curl http://<external-ip>
+
+# Internal cluster access
+kubectl run test-pod --image=busybox --rm -it --restart=Never -n hello-app -- wget -qO- http://hello-app-nodeport:80
+```
+
+**Expected Results:**
+- All access methods return: `hello-app says hi! [version: 2.0.1]`
+- HTTP requests redirect to HTTPS (301 status)
+- VirtualService properly routes traffic through Istio Gateway
 
 ## Troubleshooting
 
@@ -261,6 +360,9 @@ kubectl get services -n hello-app
 
 # Use correct port mapping
 kubectl port-forward service/hello-app-nodeport -n hello-app 8080:80
+
+# Note: Port forwarding may not work if cluster has network policies
+# Use LoadBalancer or VirtualService access instead
 ```
 
 #### 5. RBAC Issues
@@ -270,6 +372,38 @@ kubectl port-forward service/hello-app-nodeport -n hello-app 8080:80
 kubectl get serviceaccount hello-app-service-account -n hello-app
 kubectl get role pod-reader -n hello-app
 kubectl get rolebinding pod-reader-binding -n hello-app
+```
+
+#### 6. VirtualService Issues
+
+**Check VirtualService:**
+```bash
+kubectl get virtualservice -n hello-app
+kubectl describe virtualservice hello-app-virtualservice -n hello-app
+```
+
+**Common causes:**
+- VirtualService not created (required for Istio/Kyma clusters)
+- Incorrect host configuration
+- Gateway not properly configured
+- Domain validation errors (check for extra quotes in template)
+
+**Solutions:**
+- Ensure VirtualService is created when virtualService.enabled=true
+- Verify domain matches your cluster domain pattern
+- Check Istio Gateway configuration
+- Use `kubectl get virtualservice -n hello-app -o yaml` to verify configuration
+
+**Domain Troubleshooting:**
+```bash
+# Verify your cluster domain
+kubectl get configmap shoot-info -n kube-system -o jsonpath='{.data.domain}'
+
+# Check if domain is accessible
+nslookup hello-app.c-3bc6feb.stage.kyma.ondemand.com
+
+# Verify VirtualService host configuration
+kubectl get virtualservice hello-app-virtualservice -n hello-app -o jsonpath='{.spec.hosts[0]}'
 ```
 
 ### Diagnostic Commands
@@ -291,9 +425,10 @@ kubectl get endpoints -n hello-app
 # Detailed service information
 kubectl describe service hello-app-nodeport -n hello-app
 kubectl describe service hello-app-lb -n hello-app
+
+# Check VirtualService details
+kubectl describe virtualservice hello-app-virtualservice -n hello-app
 ```
-
-
 
 ### Getting Help
 
@@ -309,3 +444,5 @@ If you continue to experience issues:
 - Chart Version: 2.0.1
 - Kubernetes Version: 1.16+
 - Container Image: sysintelligent/hello-app:2.0.1
+- Cluster Domain: c-3bc6feb.stage.kyma.ondemand.com (discoverable via `kubectl get configmap shoot-info -n kube-system -o jsonpath='{.data.domain}'`)
+- **Tested and Verified**: Istio VirtualService configuration works correctly with Kyma clusters
