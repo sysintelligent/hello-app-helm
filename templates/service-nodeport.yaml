@@ -1,8 +1,8 @@
-{{- if eq .Values.service.type "LoadBalancer" }}
+{{- if or (eq .Values.service.type "NodePort") (eq .Values.service.type "ClusterIP") }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ .Values.mainService.loadbalancer }}
+  name: {{ .Values.mainService.nodeport }}
   namespace: hello-app
   labels:
     app: hello-app
@@ -15,6 +15,7 @@ spec:
     - protocol: TCP
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.service.targetPort }}
-      name: http
-  sessionAffinity: None
-{{- end }} 
+      {{- if eq .Values.service.type "NodePort" }}
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}
+{{- end }}

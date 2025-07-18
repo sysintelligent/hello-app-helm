@@ -1,0 +1,20 @@
+{{- if .Values.loadBalancer.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.loadBalancer.name }}
+  namespace: hello-app
+  labels:
+    app: hello-app
+    type: loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: hello-app
+  ports:
+    - protocol: TCP
+      port: {{ .Values.loadBalancer.port }}
+      targetPort: {{ .Values.loadBalancer.targetPort }}
+      name: http
+  sessionAffinity: None
+{{- end }} 

@@ -1,7 +1,26 @@
 image:
   repository: sysintelligent/hello-app
   tag: 2.0.1
+
 resources:
   limits:
     cpu: 50m
     memory: 20Mi
+
+service:
+  type: NodePort  # Options: NodePort, LoadBalancer, ClusterIP
+  name: hello-app-nodeport
+  port: 80
+  targetPort: 8080
+  nodePort: 30000
+
+loadBalancer:
+  enabled: true  # Set to true to create additional LoadBalancer service
+  name: hello-app-lb
+  port: 80
+  targetPort: 8080
+
+# Main service names
+mainService:
+  nodeport: hello-app-nodeport
+  loadbalancer: hello-app
