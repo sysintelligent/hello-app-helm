@@ -56,6 +56,67 @@ To test hello-app locally, follow these steps:
    $ curl $(minikube ip):30000
    ```
 
+### Deploying to Local Cluster
+
+To deploy the hello-app Helm chart to your local Kubernetes cluster using a kubeconfig file, follow these steps:
+
+1. Navigate to the hello-app-helm directory:
+   ```sh
+   $ cd hello-app-helm
+   ```
+
+2. Set the KUBECONFIG environment variable to point to your kubeconfig file:
+   ```sh
+   $ export KUBECONFIG=/path/to/your/kubeconfig.yaml
+   ```
+
+3. Verify that you can connect to your cluster:
+   ```sh
+   $ kubectl cluster-info
+   ```
+
+4. Install the hello-app chart:
+   ```sh
+   $ helm install hello-app .
+   ```
+
+5. Check the deployment status:
+   ```sh
+   $ kubectl get pods -n hello-app
+   $ kubectl get services -n hello-app
+   ```
+
+6. Get the service URL and test the application:
+   ```sh
+   $ kubectl get service hello-app -n hello-app -o wide
+   $ kubectl get nodes -o wide
+   ```
+
+   Since your service is configured as NodePort on port 30000, you can access it using any of the node internal IPs:
+   ```sh
+   $ curl http://<node-internal-ip>:30000
+   ```
+
+   For example, if your nodes have internal IPs like 10.250.0.133, 10.250.0.5, 10.250.1.5:
+   ```sh
+   $ curl http://10.250.0.133:30000
+   $ curl http://10.250.0.5:30000
+   $ curl http://10.250.1.5:30000
+   ```
+
+   **Alternative: Port Forwarding** (if you can't access internal IPs directly):
+   ```sh
+   $ kubectl port-forward service/hello-app -n hello-app 30000:80
+   $ curl http://localhost:30000
+   ```
+
+7. To uninstall the chart:
+   ```sh
+   $ helm uninstall hello-app
+   ```
+
+**Note**: Make sure your kubeconfig file has the correct permissions and contains valid cluster credentials. If you encounter authentication issues, verify your cluster access with `kubectl auth can-i get pods -n hello-app`.
+
 ## Additional Information
 
 - **Dependencies**: hello-app has no external dependencies and is designed to be lightweight and easy to deploy.
